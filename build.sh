@@ -1,0 +1,2 @@
+export PATH=$PATH:/home/ccu6/milkv/host-tools/gcc/riscv64-linux-musl-x86_64/bin
+make KERNEL_ROOT=../../../cvitek_tdl_sdk/sample MW_PATH=../../../cvitek_tdl_sdk/sample/3rd/middleware/v2 TPU_PATH=../../../cvitek_tdl_sdk/sample/3rd/tpu IVE_PATH=../../../cvitek_tdl_sdk/sample/3rd/ive USE_TPU_IVE=ON  CHIP=CV180X SDK_VER=musl_riscv64 -j10

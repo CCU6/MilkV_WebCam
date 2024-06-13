@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/../../opencv-mobile/include/opencv2/**",
+                "${workspaceFolder}/../3rd/ive/**",
+                "${workspaceFolder}/../3rd/middleware/**",
+                "${workspaceFolder}/../3rd/rtsp/**",
+                "${workspaceFolder}/../3rd/stb/**",
+                "${workspaceFolder}/../utils/**",
+                "${workspaceFolder}/../../include/**",
+                "${workspaceFolder}/../../../host-tools/gcc/riscv64-linux-musl-x86_64/riscv64-unknown-linux-musl/include/c++/10.2.0/",
+                "${workspaceFolder}/../../../host-tools/gcc/riscv64-linux-musl-x86_64/riscv64-unknown-linux-musl/include/c++/10.2.0/riscv64-unknown-linux-musl/lib64v_xthead/lp64d/",
+                "/home/ccu6/milkv/cvitek_tdl_sdk/opencv-mobile/include/opencv2",
+                "/home/ccu6/milkv/cvitek_tdl_sdk/opencv-mobile/include",
+                "${workspaceFolder}",
+                "${workspaceFolder}/../3rd/tpu/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/home/ccu6/milkv/host-tools/gcc/riscv64-linux-musl-x86_64/bin/riscv64-unknown-linux-musl-gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}

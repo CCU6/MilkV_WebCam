@@ -1,0 +1,27 @@
+{
+	"name": "(gdb) 启动",
+	"type": "cppdbg",
+	"request": "launch",
+	"program": "${workspaceFolder}/rtsp_test",
+	"args": ["./yolov5_cv181x_int8_asym.cvimodel"],
+	"stopAtEntry": false,
+	"miDebuggerServerAddress": "192.168.10.11:1234",//目标板的ip地址和端口
+	"cwd": "${workspaceFolder}",
+	"environment": [],
+	"externalConsole": false,
+	"MIMode": "gdb",
+	// "miDebuggerPath":"<path_to_sdk>/duo-src/host-tools/gcc/riscv64-elf-x86_64/bin/riscv64-unknown-elf-gdb",
+	"miDebuggerPath":"/home/ccu6/milkv/host-tools/gcc/riscv64-linux-x86_64/bin/riscv64-unknown-linux-gnu-gdb",
+	"setupCommands": [
+		{
+			"description": "为 gdb 启用整齐打印",
+			"text": "-enable-pretty-printing",
+			"ignoreFailures": true
+		},
+		{
+			"description": "将反汇编风格设置为 Intel",
+			"text": "-gdb-set disassembly-flavor intel",
+			"ignoreFailures": true
+		}
+	]
+}
