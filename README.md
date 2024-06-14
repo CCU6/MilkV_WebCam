@@ -30,6 +30,7 @@
 <img src="./image/绘图7.png" width="70%">
 <img src="./image/results.png" width="70%">
 
-
+### 硬件程序使用说明
+编辑build.sh指定riscv64-linux-musl编译器位置，设置tdl库目录即可
 ## 3 上位机实现
 上位机使用Python+Qt5框架进行编写，与硬件设备之间使用UDP进行局域网通讯。
