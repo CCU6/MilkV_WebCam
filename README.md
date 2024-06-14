@@ -6,11 +6,9 @@
 
 使用嘉立创EDA绘制原理图以及PCB文件后，在嘉立创进行打样制作。
 
+<img src="./image/SCH_Schematic1_1-P1_2024-06-04.png" width="70%">
+<img src="./image/PCB.png" width="70%">
 
-![电路原理图](./image/SCH_Schematic1_1-P1_2024-06-04.png)
-
-
-![PCB](./image/PCB.png)
 
 工程文件已开源至 https://oshwhub.com/holydeal/milkv_webcam_1-0
 
@@ -29,11 +27,9 @@
 
 
 
+<img src="./image/绘图7.png" width="70%">
+<img src="./image/results.png" width="70%">
 
-![改进C2F](./image/绘图7.png)
-
-
-![训练结果](./image/results.png)
 
 ## 3 上位机实现
 上位机使用Python+Qt5框架进行编写，与硬件设备之间使用UDP进行局域网通讯。
