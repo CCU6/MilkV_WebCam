@@ -66,7 +66,7 @@ static IMAGE_SAVER_ARGS image_saver_arges = {
   .top = 0,
   .end = 0,
 };
-
+//ALSA进程，播放声音
 void *system_ALSA_thread(void *name){
   char command[128] = {0};
   char *path = (char *)name;
@@ -88,6 +88,7 @@ void *image_saver_thread(void *args){
       #ifdef DEBUG
       printf("over 100 image, delete earlist one...");
       #endif
+      //移除最早的图片文件
       system("rm ./image/\"$(ls -t image | tail -1)\"");
       file_count --;
       #ifdef DEBUG
@@ -140,6 +141,7 @@ void *network_thread(void *ip){
   if (fd < 0) {
       return 0;
   }
+  //串口与网络交互进程
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   memset(&serveraddr, 0, sizeof(serveraddr));
   serveraddr.sin_family = AF_INET;
@@ -164,7 +166,7 @@ void *network_thread(void *ip){
           std::cout << "UART Send off" << std::endl;
       }
   }
-  close(sockfd); // 关闭套接字
+  close(sockfd);
   close(fd);
   return 0;
 }
@@ -237,7 +239,7 @@ void *run_venc(void *args) {
       pthread_mutex_unlock(&ResultMutex);
       // s_Personcount = g_Personcount;
     }
-    
+    // 检查属性，为检测框增加详细信息标签
     cvtdl_service_brush_t *brushes = (cvtdl_service_brush_t *)malloc(stObjMeta2.size * sizeof(cvtdl_service_brush_t));
     for (uint32_t oid = 0; oid < stObjMeta2.size; oid++) {
 
@@ -338,7 +340,7 @@ void *run_tdl_thread(void *pHandle) {
     for (uint32_t i = 0; i < stObjMeta.size; i++){
       if(stObjMeta.info[i].classes == 5) j++;
     }
-    if(j != 0){  
+    if(j != 0){  //过滤检测结果
       CVI_TDL_CopyObjectMeta(&stObjMeta,&stTrackObjMeta);
       for (uint32_t i = 0; i < stObjMeta.size; i++){
         if(stTrackObjMeta.info[i].classes == 5){ 
@@ -350,13 +352,13 @@ void *run_tdl_thread(void *pHandle) {
       CVI_TDL_CopyObjectMeta(&stTrackObjMeta, &stTrackObjMeta2);
     }
     else CVI_TDL_Free(&stTrackObjMeta2);
-    if (CVI_TDL_OSNet(tdl_handle, &fdFrame, &stTrackObjMeta2) != CVI_TDL_SUCCESS) {
+    if (CVI_TDL_OSNet(tdl_handle, &fdFrame, &stTrackObjMeta2) != CVI_TDL_SUCCESS) {//OSNET获取特征图
       printf("DeepSORT failed!\n");
       CVI_VPSS_ReleaseChnFrame(0, 1, &fdFrame);
       CVI_TDL_Free(&stTrackObjMeta2);
       bExit = true;
     }
-    if (CVI_TDL_DeepSORT_Obj(tdl_handle, &stTrackObjMeta2, &stTrackerMeta, true) != CVI_TDL_SUCCESS) {
+    if (CVI_TDL_DeepSORT_Obj(tdl_handle, &stTrackObjMeta2, &stTrackerMeta, true) != CVI_TDL_SUCCESS) {//DeepSORT跟踪
       printf("DeepSORT failed!\n");
       CVI_VPSS_ReleaseChnFrame(0, 1, &fdFrame);
       CVI_TDL_Free(&stTrackObjMeta);
@@ -416,13 +418,14 @@ void *run_tdl_thread(void *pHandle) {
         else if(stTrackerMeta.info[i].state == CVI_TRACKER_UNSTABLE) printf(" UNSTABLE ");
         else if(stTrackerMeta.info[i].state == CVI_TRACKER_STABLE) printf(" STABLE ");
         #endif
+        //重分配UID，DeepSORTUID为64位，每个目标都是独占ID，实际上不需要这么多ID，将ID重分配为8位
         uid_reallc(&stTrackerMeta.info[i].id,s_PersonState,g_idmap);
         #ifdef DEBUG
         printf(" %ld %d\n",stTrackerMeta.info[i].id,stTrackerMeta.info[i].out_num);
         #endif
       }
     }
-    if(stTrackerMeta.size != 0)
+    if(stTrackerMeta.size != 0)//违章检测
     {
       #ifdef DEBUG
       printf("------------------Person Count %4d-------------------\n",s_Personcount);
@@ -433,12 +436,14 @@ void *run_tdl_thread(void *pHandle) {
           OBJ_STATUS_SET(g_PersonStatus[stTrackerMeta.info[i].id].obj_status,OBJ_IS_AVAILABLE);
           uint8_t vio_cat =  0;
           OBJ_STATUS_SET(vio_cat,OBJ_VIO_SAFEHAT|OBJ_VIO_VEST);
+          //检测安全帽类违章，如果目标人形框戴了安全帽，则不认为存在违章，否则认为违章
           for(uint32_t ii = 0; ii < stObjMeta.size; ii++){
             if(stObjMeta.info[ii].classes == 0){
               if(utilis_wear_safe_hat(stObjMeta.info[ii],stTrackerMeta.info[i]) == true){
                 OBJ_STATUS_RESET(vio_cat,OBJ_VIO_SAFEHAT);
               }
             }
+            //检测反例无安全帽类别框，实际上无安全帽类别存在没有呗检测的可能，因此引入双重判断，下面反光衣检测同理。
             else if(stObjMeta.info[ii].classes == 2){
               if(utilis_is_in(stObjMeta.info[ii],stTrackerMeta.info[i]) == true){
                 OBJ_STATUS_SET(vio_cat,OBJ_VIO_SAFEHAT);
@@ -459,14 +464,17 @@ void *run_tdl_thread(void *pHandle) {
               }
             }
           }
+          //有效目标根据检测结果进行一次tick
           g_PersonStatus[stTrackerMeta.info[i].id].ticks(vio_cat);
         }
         for(uint32_t ii = 0; ii < 256; ii++){
           if(!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_AVAILABLE)){
+            //无效目标进行空tick
             g_PersonStatus[ii].ticks(0);
           }
           else if((!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_SHOTED))&&OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_STABLE)){
             update = true;
+            //分类执行不同违章对应操作
             printf("shot ID:%03d  vio:%1d\n",ii,g_PersonStatus[ii].get_violation());
             if(g_PersonStatus[ii].get_violation() == VIOLATION_NO_VEST_AND_SAFEHAT){
               timeval timenow;
@@ -564,13 +572,13 @@ void *run_tdl_thread(void *pHandle) {
       }
       // printf("---------------------------------------------------\n");
       for (uint32_t i = 0; i < 256; i++){
-        if(g_PersonStatus[i].obj_ticks != 10){
-          printf("ID:%03d  vio:%1d        ",i,g_PersonStatus[i].get_violation());
-          for(uint32_t ii = 0; ii < 10; ii++){
-            printf(" %1d",(int)g_PersonStatus[i].status_list[ii]);
-          }
-           printf("\n");
-        }
+        // if(g_PersonStatus[i].obj_ticks != 10){
+        //   printf("ID:%03d  vio:%1d        ",i,g_PersonStatus[i].get_violation());
+        //   for(uint32_t ii = 0; ii < 10; ii++){
+        //     printf(" %1d",(int)g_PersonStatus[i].status_list[ii]);
+        //   }
+        //    printf("\n");
+        // }
         OBJ_STATUS_RESET(g_PersonStatus[i].obj_status,OBJ_IS_AVAILABLE);
       }
       // printf("---------------------------------------------------\n");
