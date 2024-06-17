@@ -468,11 +468,9 @@ void *run_tdl_thread(void *pHandle) {
           g_PersonStatus[stTrackerMeta.info[i].id].ticks(vio_cat);
         }
         for(uint32_t ii = 0; ii < 256; ii++){
-          if(!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_AVAILABLE)){
-            //无效目标进行空tick
-            g_PersonStatus[ii].ticks(0);
-          }
-          else if((!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_SHOTED))&&OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_STABLE)){
+          if(OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_AVAILABLE)&&
+            (!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_SHOTED))&&
+            OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_STABLE)){
             update = true;
             //分类执行不同违章对应操作
             printf("shot ID:%03d  vio:%1d\n",ii,g_PersonStatus[ii].get_violation());
@@ -523,6 +521,11 @@ void *run_tdl_thread(void *pHandle) {
               image_saver_arges.queue[image_saver_arges.end].flag = true;                
               image_saver_arges.end ++;
               image_saver_arges.end %= 16;
+              #ifdef ALSA
+              pthread_t ALSAThread;
+              pthread_create(&ALSAThread, NULL, system_ALSA_thread, (void *)"2.wav");
+              pthread_detach(ALSAThread);
+              #endif
               #ifdef DEBUG
               printf("sended save request\n");
               #endif
@@ -549,6 +552,11 @@ void *run_tdl_thread(void *pHandle) {
               image_saver_arges.queue[image_saver_arges.end].flag = true;                
               image_saver_arges.end ++;
               image_saver_arges.end %= 16;
+              #ifdef ALSA
+              pthread_t ALSAThread;
+              pthread_create(&ALSAThread, NULL, system_ALSA_thread, (void *)"1.wav");
+              pthread_detach(ALSAThread);
+              #endif
               #ifdef DEBUG
               printf("sended save request\n");
               #endif
@@ -564,26 +572,33 @@ void *run_tdl_thread(void *pHandle) {
           }
         }
       }
+      for(uint32_t ii = 0; ii < 256; ii++){
+        if(!OBJ_STATUS_CHECK(g_PersonStatus[ii].obj_status,OBJ_IS_AVAILABLE)){
+          //无效目标进行空tick
+          g_PersonStatus[ii].ticks(0);
+        }
+        else{
+          OBJ_STATUS_RESET(g_PersonStatus[ii].obj_status,OBJ_IS_AVAILABLE);
+        }
+      }
       if(update == true){
         update = false;
         pthread_mutex_lock(&ResultMutex);
         g_Personcount = s_Personcount;
         pthread_mutex_unlock(&ResultMutex);
       }
-      // printf("---------------------------------------------------\n");
-      for (uint32_t i = 0; i < 256; i++){
-        // if(g_PersonStatus[i].obj_ticks != 10){
-        //   printf("ID:%03d  vio:%1d        ",i,g_PersonStatus[i].get_violation());
-        //   for(uint32_t ii = 0; ii < 10; ii++){
-        //     printf(" %1d",(int)g_PersonStatus[i].status_list[ii]);
-        //   }
-        //    printf("\n");
-        // }
-        OBJ_STATUS_RESET(g_PersonStatus[i].obj_status,OBJ_IS_AVAILABLE);
-      }
-      // printf("---------------------------------------------------\n");
     }
-
+    printf("---------------------------------------------------\n");
+    for (uint32_t i = 0; i < 256; i++){
+      if(g_PersonStatus[i].obj_ticks != 0){
+        printf("ID:%03d ticks:%2d vio:%1d        ",i,g_PersonStatus[i].obj_ticks.load(),g_PersonStatus[i].get_violation());
+        for(uint32_t ii = 0; ii < 10; ii++){
+          printf(" %1d",(int)g_PersonStatus[i].status_list[ii]);
+        }
+          printf("\n");
+      }
+    }
+    printf("---------------------------------------------------\n");
     pthread_mutex_lock(&ResultMutex);
     CVI_TDL_CopyObjectMeta(&stObjMeta, &g_obj_data);
     CVI_TDL_CopyObjectMeta(&stTrackObjMeta2, &g_obj_data2);

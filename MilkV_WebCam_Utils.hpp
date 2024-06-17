@@ -55,12 +55,13 @@
 #define OBJ_STABLE_TICKS    100
 #define OBJ_NEW_TICKS       10
 #define OBJ_CHECK_TICKS     10
-#define OBJ_VIOLATION_TICKS 6
+#define OBJ_VIOLATION_TICKS 3
 
+#define VIOLATION_SAFE                  1
 #define VIOLATION_NO_VEST               2
 #define VIOLATION_NO_SAFEHAT            3
 #define VIOLATION_NO_VEST_AND_SAFEHAT   4
-#define VIOLATION_SAFE                  1
+
 
     /*
     bit 0 ID是否有效

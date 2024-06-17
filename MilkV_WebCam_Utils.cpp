@@ -2,24 +2,36 @@
 
 
 void Obj_Status::ticks(uint8_t vio_id){
+  uint8_t vid;
   if(OBJ_STATUS_CHECK(obj_status,OBJ_IS_AVAILABLE)){
     if(OBJ_STATUS_CHECK(obj_status,OBJ_IS_NEW)){
       obj_ticks --;
       if(obj_ticks == 0){
-        OBJ_STATUS_SET(obj_status,OBJ_IS_STABLE);
-        OBJ_STATUS_RESET(obj_status,OBJ_IS_NEW);
-        OBJ_STATUS_SET(obj_status,vio_ids[get_violation()]);
-        obj_ticks = OBJ_STABLE_TICKS;
+        vid = get_violation();
+        if(vid == 0){
+          this->obj_clear();
+        }
+        else{
+          OBJ_STATUS_SET(obj_status,OBJ_IS_STABLE);
+          OBJ_STATUS_RESET(obj_status,OBJ_IS_NEW);
+          OBJ_STATUS_SET(obj_status,vio_ids[vid]);
+          obj_ticks = OBJ_STABLE_TICKS;          
+        }
       }
     }
     else if(OBJ_STATUS_CHECK(obj_status,OBJ_IS_STABLE)){
       obj_ticks = OBJ_STABLE_TICKS;
     }
+    else{
+      OBJ_STATUS_SET(obj_status,OBJ_IS_NEW);
+      obj_ticks = OBJ_NEW_TICKS;
+      obj_ticks --;
+    }
     this->set_status_list(vio_id);
   }
   else{
     if(OBJ_STATUS_CHECK(obj_status,OBJ_IS_NEW)){
-      this->obj_clear();
+        this->obj_clear();
     }
     else if(OBJ_STATUS_CHECK(obj_status,OBJ_IS_STABLE)){
       obj_ticks --;
@@ -32,7 +44,6 @@ void Obj_Status::ticks(uint8_t vio_id){
 Obj_Status::Obj_Status(){
   obj_ticks = 0;
   obj_status = 0;
-  OBJ_STATUS_SET(obj_status,OBJ_IS_NEW);
 }
 Obj_Status::~Obj_Status(){
   ;
@@ -40,8 +51,8 @@ Obj_Status::~Obj_Status(){
 void Obj_Status::obj_clear(void){
   obj_ticks = 0;
   obj_status = 0;
-  OBJ_STATUS_SET(obj_status,OBJ_IS_NEW);
-  obj_ticks = OBJ_NEW_TICKS;
+  // OBJ_STATUS_SET(obj_status,OBJ_IS_NEW);
+  // obj_ticks = OBJ_NEW_TICKS;
   for(uint8_t i = 0;i < OBJ_CHECK_TICKS;i++){
     status_list[i] = 0;
   }
@@ -67,12 +78,15 @@ uint8_t Obj_Status::get_violation(void){
   for(i = 0;i < OBJ_CHECK_TICKS;i++){
     vio_list[status_list[i]]++;
   }
-  for(i = 0;i < 5;i++){
+  for(i = 1;i < 5;i++){
     if(vio_list[i] > vio_max){
       vio_max = vio_list[i];
       vio_id = i;
     }
   }
+  if (vio_list[vio_id] <= OBJ_VIOLATION_TICKS){
+    vio_id = 0;
+  } 
   return vio_id;
 }
 
